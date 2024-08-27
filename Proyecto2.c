@@ -26,8 +26,7 @@ void quadratic_solver_parallel(double a, double b, double c, double *sol1_real, 
 
         #pragma omp section
         {
-            // No hay cálculos adicionales necesarios en esta sección para el paralelo
-            // Este es un ejemplo de cómo se pueden distribuir múltiples tareas.
+           
         }
     }
 }
