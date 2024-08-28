@@ -3,6 +3,8 @@
 #include <math.h>
 #include <time.h>
 
+#define MAX_EQUATIONS 100 // Define un máximo para el número de ecuaciones
+
 // Función para resolver la fórmula cuadrática de manera secuencial
 void quadratic_solver_sequential(double a, double b, double c, double *sol1_real, double *sol1_imag, double *sol2_real, double *sol2_imag) {
     double discriminant = b * b - 4 * a * c;
@@ -21,21 +23,6 @@ void quadratic_solver_sequential(double a, double b, double c, double *sol1_real
     }
 }
 
-// Función para leer un número desde la entrada del usuario con validación
-double read_number(const char *prompt) {
-    double value;
-    char term;
-    while (1) {
-        printf("%s", prompt);
-        if (scanf("%lf%c", &value, &term) != 2 || term != '\n') {
-            printf("Entrada inválida. Por favor, ingrese un número válido.\n");
-            while (getchar() != '\n'); // Limpiar el buffer de entrada
-        } else {
-            return value;
-        }
-    }
-}
-
 // Función para imprimir las soluciones de la ecuación
 void print_solutions(double sol1_real, double sol1_imag, double sol2_real, double sol2_imag) {
     if (sol1_imag == 0) {
@@ -51,31 +38,43 @@ void print_solutions(double sol1_real, double sol1_imag, double sol2_real, doubl
     }
 }
 
-int main() {
+// Función para leer los coeficientes desde un archivo CSV y resolver secuencialmente
+void read_csv_and_solve_sequential(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("No se pudo abrir el archivo %s\n", filename);
+        return;
+    }
+
     double a, b, c;
     double sol1_real, sol1_imag, sol2_real, sol2_imag;
+    int equation_number = 0;
+
+    while (fscanf(file, "%lf,%lf,%lf", &a, &b, &c) != EOF) {
+        equation_number++;
+        if (a == 0) {
+            printf("El coeficiente 'a' no puede ser cero. Entrada ignorada en ecuación %d.\n", equation_number);
+            continue;
+        }
+
+        printf("Resolviendo ecuación %d con a=%.2lf, b=%.2lf, c=%.2lf:\n", equation_number, a, b, c);
+        quadratic_solver_sequential(a, b, c, &sol1_real, &sol1_imag, &sol2_real, &sol2_imag);
+        print_solutions(sol1_real, sol1_imag, sol2_real, sol2_imag);
+    }
+
+    fclose(file);
+}
+
+int main() {
+    const char *filename = "test.csv";
     clock_t start, end;
     double cpu_time_used;
-
-    // Solicitar los coeficientes al usuario con validación
-    a = read_number("Ingrese el coeficiente a: ");
-    b = read_number("Ingrese el coeficiente b: ");
-    c = read_number("Ingrese el coeficiente c: ");
-
-    // Verificar que 'a' no sea cero
-    if (a == 0) {
-        printf("El coeficiente 'a' no puede ser cero.\n");
-        return 1;
-    }
 
     // Medir tiempo de ejecución
     start = clock();
 
-    // Resolver la ecuación cuadrática (versión secuencial)
-    quadratic_solver_sequential(a, b, c, &sol1_real, &sol1_imag, &sol2_real, &sol2_imag);
-
-    // Imprimir las soluciones
-    print_solutions(sol1_real, sol1_imag, sol2_real, sol2_imag);
+    // Leer y resolver las ecuaciones cuadráticas desde el archivo CSV (versión secuencial)
+    read_csv_and_solve_sequential(filename);
 
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
